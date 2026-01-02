@@ -1,12 +1,17 @@
 import { useState, useEffect } from 'react';
 import Login from './Login';
 import api from './api';
-import Employees from './Employees'; // Yeni oluşturduğumuz bileşeni import ettik
+import Employees from './Employees';
+import AcceptInvite from './AcceptInvite'; 
+import FileCenter from './FileCenter';
 
 function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [user, setUser] = useState(null);
-  const [activeTab, setActiveTab] = useState('dashboard'); // Sekme yönetimi için state
+  const [activeTab, setActiveTab] = useState('dashboard');
+  
+  // Auth ekranları arası geçişi yöneten state 
+  const [authView, setAuthView] = useState('login'); 
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -29,12 +34,28 @@ function App() {
     localStorage.removeItem('token');
     setIsLoggedIn(false);
     setUser(null);
+    setAuthView('login'); 
   };
 
+  // --- GİRİŞ YAPILMAMIŞSA ---
   if (!isLoggedIn) {
-    return <Login onLoginSuccess={() => { setIsLoggedIn(true); fetchUser(); }} />;
+    if (authView === 'login') {
+      return (
+        <Login 
+          onLoginSuccess={() => { setIsLoggedIn(true); fetchUser(); }} 
+          onSwitchToAccept={() => setAuthView('accept-invite')} 
+        />
+      );
+    } else {
+      return (
+        <AcceptInvite 
+          onSwitchToLogin={() => setAuthView('login')} 
+        />
+      );
+    }
   }
 
+  // --- GİRİŞ YAPILMIŞSA ---
   return (
     <div className="flex h-screen bg-gray-100 font-sans">
       {/* 1. SIDEBAR */}
@@ -74,7 +95,7 @@ function App() {
         {/* TOPBAR */}
         <header className="flex justify-between items-center py-4 px-8 bg-white shadow-sm border-b border-gray-200">
           <div className="text-xl font-bold text-gray-800 uppercase tracking-wide">
-            {activeTab === 'dashboard' ? 'Genel Bakış' : activeTab === 'employees' ? 'Personel Listesi' : 'Dosyalarım'}
+            {activeTab === 'dashboard' ? 'Genel Bakış' : activeTab === 'employees' ? 'Personel Listesi' : 'Dosya Analizi'}
           </div>
           <div className="flex items-center space-x-4">
             <div className="text-right">
@@ -102,13 +123,9 @@ function App() {
               </div>
             </div>
           ) : activeTab === 'employees' ? (
-            /* PERSONEL YÖNETİMİ GÖRÜNÜMÜ */
             <Employees />
           ) : (
-            /* DİĞER (FILES) GÖRÜNÜMÜ */
-            <div className="bg-white p-20 rounded-xl shadow-sm border border-gray-200 text-center">
-               <p className="text-gray-400 text-lg">Dosya Merkezi Modülü Çok Yakında!</p>
-            </div>
+            <FileCenter />
           )}
         </main>
       </div>
